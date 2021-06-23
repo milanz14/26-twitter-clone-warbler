@@ -23,3 +23,8 @@ class LoginForm(FlaskForm):
 
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[Length(min=6)])
+
+class EditProfileForm(FlaskForm):
+    """ Edit user profile """
+    username = StringField('Username')
+    password = PasswordField('Password')
