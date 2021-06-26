@@ -252,6 +252,17 @@ def delete_user():
 
     return redirect("/signup")
 
+##############################################################################
+# Likes routes:
+@app.route('/users/likes', methods=['GET'])
+def show_user_likes():
+    """ show the user's liked messages """
+    pass
+
+@app.route('/users/add_like/<int:message_id>', methods=['POST'])
+def add_like(message_id):
+    """ add messages to user's likes array """
+    pass
 
 ##############################################################################
 # Messages routes:
