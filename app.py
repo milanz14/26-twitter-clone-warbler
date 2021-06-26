@@ -19,9 +19,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
+# app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
-toolbar = DebugToolbarExtension(app)
+# toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
@@ -226,9 +226,14 @@ def profile():
         user.header_image_url = form.header_image_url.data
         user.bio = form.bio.data
         user.location = form.location.data
-        db.session.commit()
-        return redirect(f'/users/{uid}')
-
+        user.password = form.password.data
+        try:
+            user.authenticate(username=user.username,password=user.password)
+            db.session.commit()
+            return redirect(f'/users/{uid}')
+        except:
+            flash('That password is not valid')
+            return redirect('/')
     return render_template('users/edit.html', form=form, user=user)
 
 
