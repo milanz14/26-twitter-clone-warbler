@@ -315,8 +315,15 @@ def homepage():
     """
 
     if g.user:
+        # get the IDs of all of the users that are being followed
+        following_users = [following.id for following in g.user.following]
+        # add current user's ID into the array of following users IDs
+        following_users.append(g.user.id)
         messages = (Message
                     .query
+                    # add a filter to only show the messages for all following
+                    # users and the current user
+                    .filter(Message.user_id.in_(following_users))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
