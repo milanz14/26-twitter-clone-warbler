@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, EditProfileForm
-from models import db, connect_db, User, Message
+from models import db, connect_db, User, Message, Likes
 
 CURR_USER_KEY = "curr_user"
 
@@ -221,19 +221,20 @@ def profile():
 
     form = EditProfileForm(obj=user)
     if form.validate_on_submit():
+        user = User.authenticate(username=user.username,password=form.password.data)
+
+        if not user:
+            flash('Invalid Password. What fresh hell is this?','danger')
+            return redirect('/')
+
         user.username = form.username.data
         user.image_url = form.image_url.data
         user.header_image_url = form.header_image_url.data
         user.bio = form.bio.data
         user.location = form.location.data
-        user.password = form.password.data
-        try:
-            user.authenticate(username=user.username,password=user.password)
-            db.session.commit()
-            return redirect(f'/users/{uid}')
-        except:
-            flash('That password is not valid')
-            return redirect('/')
+        db.session.commit()
+        return redirect(f'/users/{uid}')
+
     return render_template('users/edit.html', form=form, user=user)
 
 
@@ -254,15 +255,36 @@ def delete_user():
 
 ##############################################################################
 # Likes routes:
-@app.route('/users/likes', methods=['GET'])
-def show_user_likes():
+@app.route('/users/<int:user_id>/likes', methods=['GET'])
+def show_user_likes(user_id):
     """ show the user's liked messages """
-    pass
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    likes = [likes.id for likes in user.likes]
+    messages = Message.query.filter(Message.id.in_(likes)).order_by(Message.timestamp.desc()).all()
+    return render_template('users/likes.html', user=user, likes=likes, messages=messages)
 
 @app.route('/users/add_like/<int:message_id>', methods=['POST'])
 def add_like(message_id):
     """ add messages to user's likes array """
-    pass
+    user_id = session[CURR_USER_KEY]
+    liked_message = Message.query.get(message_id)
+    liked_messages = [likes.id for likes in g.user.likes]
+
+    if message_id in liked_messages:
+        liked_message = Likes.query.filter_by(message_id=message_id).first()
+        db.session.delete(liked_message)
+        db.session.commit()
+        return redirect('/')
+    else:
+        add_like = Likes(user_id=user_id, message_id=message_id)
+        db.session.add(add_like)
+        db.session.commit()
+        return redirect('/')
+
 
 ##############################################################################
 # Messages routes:

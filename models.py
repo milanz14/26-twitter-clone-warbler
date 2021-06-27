@@ -31,7 +31,6 @@ class Likes(db.Model):
     """Mapping user likes to warbles."""
 
     __tablename__ = 'likes' 
-
     id = db.Column(
         db.Integer,
         primary_key=True
